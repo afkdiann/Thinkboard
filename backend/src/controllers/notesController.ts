@@ -1,6 +1,16 @@
-import Note from "../models/Note.js";
+import Note from "../models/Note";
+import { Request, Response } from "express";
 
-export async function getAllNotes(_, res) {
+interface NoteParams {
+  id: string;
+}
+
+interface NoteBody {
+  title: string;
+  content: string;
+}
+
+export async function getAllNotes(_req: Request, res: Response): Promise<void> {
   try {
     const notes = await Note.find().sort({createdAt: -1});
     res.status(200).json(notes);
@@ -10,11 +20,12 @@ export async function getAllNotes(_, res) {
   }
 }
 
-export async function getNoteById(req, res){
+export async function getNoteById(req: Request<NoteParams, {}, {}>, res: Response): Promise<void> {
   try {
     const note = await Note.findById(req.params.id);
     if(!note){
-      return res.status(404).json({message: "Note not found"});
+      res.status(404).json({message: "Note not found"});
+      return;
     }
     res.status(200).json(note);
   } catch (error) {
@@ -23,7 +34,7 @@ export async function getNoteById(req, res){
   }
 }
 
-export async function createNote(req, res) {
+export async function createNote(req: Request<{}, {}, NoteBody>, res: Response): Promise<void> {
   try {
     const { title, content } = req.body;
     const note = new Note({ title, content });
@@ -35,7 +46,7 @@ export async function createNote(req, res) {
   }
 }
 
-export async function updateNote(req, res) {
+export async function updateNote(req: Request<NoteParams, {}, NoteBody>, res: Response): Promise<void> {
   try {
     const { title, content } = req.body;
     const updatedNote = await Note.findByIdAndUpdate(
@@ -44,7 +55,8 @@ export async function updateNote(req, res) {
       { new: true }
     );
     if (!updatedNote) {
-      return res.status(404).json({ message: "Note not found" });
+      res.status(404).json({ message: "Note not found" });
+      return;
     }
     res.status(200).json(updatedNote);
   } catch (error) {
@@ -53,11 +65,12 @@ export async function updateNote(req, res) {
   }
 }
 
-export async function deleteNote(req, res) {
+export async function deleteNote(req: Request<NoteParams, {}, {}>, res: Response): Promise<void> {
   try {
     const deletedNote = await Note.findByIdAndDelete(req.params.id);
     if (!deletedNote) {
-      return res.status(404).json({ message: "Note not found" });
+      res.status(404).json({ message: "Note not found" });
+      return;
     }
     res.status(200).json(deletedNote);
   } catch (error) {
